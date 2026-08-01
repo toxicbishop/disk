@@ -10,3 +10,7 @@ This directory contains three separate Go programs that were previously conflict
   - Run with: `go run ./example2`
 - **chunks/**: Contains the simple chunk calculation test (previously `go.go`).
   - Run with: `go run ./chunks`
+
+## License
+
+This project is licensed under the terms of the [MIT License](LICENSE).
