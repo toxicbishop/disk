@@ -197,3 +197,55 @@ func (fs *FileSystem) Mkdir(name string) error {
 	fs.disk.WriteBlock(int(rootBlkIdx), rootBlk)
 	return nil
 }
+
+// Rm removes a file or directory from the root directory
+func (fs *FileSystem) Rm(name string, recursive bool) error {
+	root := fs.readInode(0)
+	if root == nil || !root.IsDir() {
+		return fmt.Errorf("root directory not found")
+	}
+
+	rootBlkIdx := root.Blocks[0]
+	rootBlk, _ := fs.disk.ReadBlock(int(rootBlkIdx))
+	
+	var targetInodeNum uint32 = 0
+	var entryOffset int = -1
+
+	// Find the entry
+	for offset := 0; offset < BlockSize; offset += 32 {
+		entry := DeserializeDirEntry(rootBlk[offset : offset+32])
+		if entry.Name == name {
+			targetInodeNum = entry.InodeNum
+			entryOffset = offset
+			break
+		}
+	}
+
+	if targetInodeNum == 0 {
+		return fmt.Errorf("no such file or directory")
+	}
+
+	targetInode := fs.readInode(targetInodeNum)
+	if targetInode.IsDir() && !recursive {
+		return fmt.Errorf("is a directory (use -r to remove)")
+	}
+
+	// Free all allocated direct blocks for the inode
+	for i := 0; i < DirectBlocks; i++ {
+		blk := targetInode.Blocks[i]
+		if blk != 0 {
+			fs.freeBlock(int(blk))
+		}
+	}
+
+	// Clear the inode (set mode to 0)
+	targetInode.Mode = 0
+	fs.writeInode(targetInodeNum, targetInode)
+
+	// Remove from root directory
+	emptyEntry := DirEntry{InodeNum: 0, Name: ""}
+	copy(rootBlk[entryOffset:entryOffset+32], SerializeDirEntry(emptyEntry))
+	fs.disk.WriteBlock(int(rootBlkIdx), rootBlk)
+
+	return nil
+}

@@ -72,8 +72,30 @@ func main() {
 			} else {
 				fmt.Printf("Created directory '%s'\n", args[1])
 			}
+		case "rm":
+			if len(args) < 2 {
+				fmt.Println("Usage: rm [-r] <name>")
+				continue
+			}
+			recursive := false
+			target := args[1]
+			if args[1] == "-r" {
+				if len(args) < 3 {
+					fmt.Println("Usage: rm -r <name>")
+					continue
+				}
+				recursive = true
+				target = args[2]
+			}
+			
+			err := myFS.Rm(target, recursive)
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+			} else {
+				fmt.Printf("Removed '%s'\n", target)
+			}
 		default:
-			fmt.Printf("Unknown command: %s. (Available: info, ls, mkdir, exit)\n", cmd)
+			fmt.Printf("Unknown command: %s. (Available: info, ls, mkdir, rm, exit)\n", cmd)
 		}
 	}
 }
