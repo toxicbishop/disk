@@ -44,4 +44,4 @@ The older, simplified simulations are still available for reference:
 
 ## License
 
-This project is licensed under the terms of the MIT License.
+This project is licensed under the terms of the [MIT License](LICENSE).
